@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import {
@@ -20,6 +21,7 @@ import {
   writeFile,
   deleteItem,
   getFileInfo,
+  renameItem,
 } from "../utils/fileSystemUtils";
 
 const FileManager = () => {
@@ -30,6 +32,10 @@ const FileManager = () => {
   const [newFileName, setNewFileName] = useState("");
   const [fileContent, setFileContent] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [itemToRename, setItemToRename] = useState(null);
+  const [newItemName, setNewItemName] = useState("");
 
   const refreshDirectory = async () => {
     const content = await getDirectoryContent(currentPath);
@@ -106,6 +112,22 @@ const FileManager = () => {
     Alert.alert("Інформація про файл", JSON.stringify(info, null, 2));
   };
 
+  const handleRenameItem = (item) => {
+    setItemToRename(item);
+    setNewItemName(item.replace("/", ""));
+    setRenameModalVisible(true);
+  };
+
+  const confirmRename = async () => {
+    if (newItemName && itemToRename) {
+      await renameItem(currentPath, itemToRename, newItemName);
+      setRenameModalVisible(false);
+      setItemToRename(null);
+      setNewItemName("");
+      refreshDirectory();
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.itemRow}>
       <TouchableOpacity
@@ -117,6 +139,7 @@ const FileManager = () => {
         <Text>{item}</Text>
       </TouchableOpacity>
       <View style={styles.itemActions}>
+        <Button title="✏️" onPress={() => handleRenameItem(item)} />
         <Button title="ℹ️" onPress={() => handleFileInfo(item)} />
         <Button title="🗑" onPress={() => handleDelete(item)} />
       </View>
@@ -175,6 +198,25 @@ const FileManager = () => {
           onPress={selectedFile ? handleSaveFile : handleCreateFile}
         />
       </View>
+
+      <Modal visible={renameModalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>Нова назва для "{itemToRename}"</Text>
+            <TextInput
+              value={newItemName}
+              onChangeText={setNewItemName}
+              style={styles.input}
+            />
+            <Button title="Перейменувати" onPress={confirmRename} />
+            <Button
+              title="Скасувати"
+              onPress={() => setRenameModalVisible(false)}
+              color="red"
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -211,6 +253,18 @@ const styles = StyleSheet.create({
   itemActions: {
     flexDirection: "row",
     gap: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
   },
 });
 
