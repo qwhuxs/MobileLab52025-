@@ -19,6 +19,7 @@ import {
   readFile,
   writeFile,
   deleteItem,
+  getFileInfo,
 } from "../utils/fileSystemUtils";
 
 const FileManager = () => {
@@ -100,6 +101,11 @@ const FileManager = () => {
     ]);
   };
 
+  const handleFileInfo = async (item) => {
+    const info = await getFileInfo(currentPath, item);
+    Alert.alert("Інформація про файл", JSON.stringify(info, null, 2));
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.itemRow}>
       <TouchableOpacity
@@ -110,7 +116,10 @@ const FileManager = () => {
       >
         <Text>{item}</Text>
       </TouchableOpacity>
-      <Button title="🗑" onPress={() => handleDelete(item)} />
+      <View style={styles.itemActions}>
+        <Button title="ℹ️" onPress={() => handleFileInfo(item)} />
+        <Button title="🗑" onPress={() => handleDelete(item)} />
+      </View>
     </View>
   );
 
@@ -198,6 +207,10 @@ const styles = StyleSheet.create({
   },
   itemButton: {
     flex: 1,
+  },
+  itemActions: {
+    flexDirection: "row",
+    gap: 5,
   },
 });
 
