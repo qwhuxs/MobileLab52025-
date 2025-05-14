@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, Button, StyleSheet, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Button,
+  StyleSheet,
+  TextInput,
+  Alert,
+} from "react-native";
 import * as FileSystem from "expo-file-system";
 import {
   APP_DIR,
@@ -7,6 +15,8 @@ import {
   getStorageStats,
   createFolder,
   createFile,
+  readFile,
+  writeFile,
 } from "../utils/fileSystemUtils";
 
 const FileManager = () => {
@@ -16,6 +26,7 @@ const FileManager = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [newFileName, setNewFileName] = useState("");
   const [fileContent, setFileContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const refreshDirectory = async () => {
     const content = await getDirectoryContent(currentPath);
@@ -57,6 +68,22 @@ const FileManager = () => {
     }
   };
 
+  const handleOpenFile = async (file) => {
+    const content = await readFile(currentPath, file);
+    setSelectedFile(file);
+    setFileContent(content);
+  };
+
+  const handleSaveFile = async () => {
+    if (selectedFile) {
+      await writeFile(currentPath, selectedFile, fileContent);
+      Alert.alert("Файл збережено");
+      setSelectedFile(null);
+      setFileContent("");
+      refreshDirectory();
+    }
+  };
+
   return (
     <View style={{ flex: 1, padding: 10 }}>
       <Text style={styles.path}>Поточний шлях: {currentPath}</Text>
@@ -67,7 +94,9 @@ const FileManager = () => {
         renderItem={({ item }) => (
           <Button
             title={item}
-            onPress={() => item.endsWith("/") ? handleOpenFolder(item) : null}
+            onPress={() =>
+              item.endsWith("/") ? handleOpenFolder(item) : handleOpenFile(item)
+            }
           />
         )}
       />
@@ -77,7 +106,11 @@ const FileManager = () => {
       <Text style={styles.storage}>
         📊 Памʼять:{" "}
         {storageInfo.totalSpace
-          ? `${(storageInfo.usedSpace / 1024 / 1024).toFixed(2)}MB / ${(storageInfo.totalSpace / 1024 / 1024).toFixed(2)}MB`
+          ? `${(storageInfo.usedSpace / 1024 / 1024).toFixed(2)}MB / ${(
+              storageInfo.totalSpace /
+              1024 /
+              1024
+            ).toFixed(2)}MB`
           : "..."}
       </Text>
 
@@ -105,7 +138,10 @@ const FileManager = () => {
           style={styles.input}
           multiline
         />
-        <Button title="Створити файл" onPress={handleCreateFile} />
+        <Button
+          title={selectedFile ? "Зберегти файл" : "Створити файл"}
+          onPress={selectedFile ? handleSaveFile : handleCreateFile}
+        />
       </View>
     </View>
   );
