@@ -14,7 +14,8 @@
 ## Встановлення залежностей:
 npm install
 npx expo install expo-file-system
-```
+
+---
 
 ## Скріншоти роботи застосунку:
 
