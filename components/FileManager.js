@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, Button, StyleSheet } from "react-native";
+import { View, Text, FlatList, Button, StyleSheet, TextInput } from "react-native";
+import * as FileSystem from "expo-file-system";
 import {
   APP_DIR,
   getDirectoryContent,
   getStorageStats,
+  createFolder,
+  createFile,
 } from "../utils/fileSystemUtils";
 
 const FileManager = () => {
   const [currentPath, setCurrentPath] = useState(APP_DIR);
   const [items, setItems] = useState([]);
   const [storageInfo, setStorageInfo] = useState({});
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFileName, setNewFileName] = useState("");
+  const [fileContent, setFileContent] = useState("");
 
   const refreshDirectory = async () => {
     const content = await getDirectoryContent(currentPath);
@@ -34,37 +40,97 @@ const FileManager = () => {
     }
   };
 
+  const handleCreateFolder = async () => {
+    if (newFolderName) {
+      await createFolder(currentPath, newFolderName);
+      setNewFolderName("");
+      refreshDirectory();
+    }
+  };
+
+  const handleCreateFile = async () => {
+    if (newFileName && fileContent) {
+      await createFile(currentPath, newFileName, fileContent);
+      setNewFileName("");
+      setFileContent("");
+      refreshDirectory();
+    }
+  };
+
   return (
     <View style={{ flex: 1, padding: 10 }}>
       <Text style={styles.path}>Поточний шлях: {currentPath}</Text>
+
       <FlatList
         data={items}
         keyExtractor={(item) => item}
         renderItem={({ item }) => (
           <Button
             title={item}
-            onPress={() => (item.endsWith("/") ? handleOpenFolder(item) : null)}
+            onPress={() => item.endsWith("/") ? handleOpenFolder(item) : null}
           />
         )}
       />
+
       <Button title="⬆️ Вгору" onPress={handleGoUp} />
+
       <Text style={styles.storage}>
         📊 Памʼять:{" "}
         {storageInfo.totalSpace
-          ? `${(storageInfo.usedSpace / 1024 / 1024).toFixed(2)}MB / ${(
-              storageInfo.totalSpace /
-              1024 /
-              1024
-            ).toFixed(2)}MB`
+          ? `${(storageInfo.usedSpace / 1024 / 1024).toFixed(2)}MB / ${(storageInfo.totalSpace / 1024 / 1024).toFixed(2)}MB`
           : "..."}
       </Text>
+
+      <View style={styles.section}>
+        <TextInput
+          placeholder="Назва папки"
+          value={newFolderName}
+          onChangeText={setNewFolderName}
+          style={styles.input}
+        />
+        <Button title="Створити папку" onPress={handleCreateFolder} />
+      </View>
+
+      <View style={styles.section}>
+        <TextInput
+          placeholder="Назва файлу"
+          value={newFileName}
+          onChangeText={setNewFileName}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Вміст файлу"
+          value={fileContent}
+          onChangeText={setFileContent}
+          style={styles.input}
+          multiline
+        />
+        <Button title="Створити файл" onPress={handleCreateFile} />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  path: { fontSize: 12, marginVertical: 5 },
-  storage: { marginTop: 10, fontSize: 12, color: "gray" },
+  path: {
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  storage: {
+    marginTop: 10,
+    marginBottom: 10,
+    fontStyle: "italic",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 8,
+    marginVertical: 5,
+    borderRadius: 5,
+  },
+  section: {
+    marginTop: 15,
+  },
 });
 
 export default FileManager;
