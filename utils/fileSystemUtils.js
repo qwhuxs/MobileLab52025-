@@ -25,3 +25,19 @@ export const writeFile = async (path, fileName, content) => {
 export const deleteItem = async (path, name) => {
   await FileSystem.deleteAsync(`${path}${name}`, { idempotent: true });
 };
+
+export const getFileInfo = async (path, name) => {
+  return await FileSystem.getInfoAsync(`${path}${name}`);
+};
+
+export const getStorageStats = async () => {
+  const freeSpace = await FileSystem.getFreeDiskStorageAsync();
+  const totalSpace = await FileSystem.getTotalDiskCapacityAsync();
+  return { totalSpace, freeSpace, usedSpace: totalSpace - freeSpace };
+};
+
+export const renameItem = async (path, oldName, newName) => {
+  const oldPath = path + oldName;
+  const newPath = path + newName + (oldName.endsWith("/") ? "/" : "");
+  await FileSystem.moveAsync({ from: oldPath, to: newPath });
+};
