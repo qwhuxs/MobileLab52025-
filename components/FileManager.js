@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TextInput,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import {
@@ -17,6 +18,7 @@ import {
   createFile,
   readFile,
   writeFile,
+  deleteItem,
 } from "../utils/fileSystemUtils";
 
 const FileManager = () => {
@@ -84,6 +86,34 @@ const FileManager = () => {
     }
   };
 
+  const handleDelete = async (item) => {
+    Alert.alert("Підтвердження", `Видалити "${item}"?`, [
+      { text: "Скасувати", style: "cancel" },
+      {
+        text: "Видалити",
+        style: "destructive",
+        onPress: async () => {
+          await deleteItem(currentPath, item);
+          refreshDirectory();
+        },
+      },
+    ]);
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.itemRow}>
+      <TouchableOpacity
+        style={styles.itemButton}
+        onPress={() =>
+          item.endsWith("/") ? handleOpenFolder(item) : handleOpenFile(item)
+        }
+      >
+        <Text>{item}</Text>
+      </TouchableOpacity>
+      <Button title="🗑" onPress={() => handleDelete(item)} />
+    </View>
+  );
+
   return (
     <View style={{ flex: 1, padding: 10 }}>
       <Text style={styles.path}>Поточний шлях: {currentPath}</Text>
@@ -91,14 +121,7 @@ const FileManager = () => {
       <FlatList
         data={items}
         keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <Button
-            title={item}
-            onPress={() =>
-              item.endsWith("/") ? handleOpenFolder(item) : handleOpenFile(item)
-            }
-          />
-        )}
+        renderItem={renderItem}
       />
 
       <Button title="⬆️ Вгору" onPress={handleGoUp} />
@@ -166,6 +189,15 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 15,
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 5,
+  },
+  itemButton: {
+    flex: 1,
   },
 });
 
