@@ -1,4 +1,18 @@
 import * as FileSystem from "expo-file-system";
+import { useEffect } from "react";
+
+export const useInitializeAppData = () => {
+  useEffect(() => {
+    const initAppData = async () => {
+      const dirInfo = await FileSystem.getInfoAsync(APP_DIR);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(APP_DIR, { intermediates: true });
+        console.log("AppData directory created");
+      }
+    };
+    initAppData();
+  }, []);
+};
 
 export const APP_DIR = FileSystem.documentDirectory + "AppData/";
 
